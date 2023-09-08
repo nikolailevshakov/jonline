@@ -2,23 +2,24 @@ name: Flutter macOS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "gh-action-flutter-macos" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "gh-action-flutter-macos" ]
 
 jobs:
   build_macos:
     name: Build
-    # This job is known to fail.
-    continue-on-error: true
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           architecture: x64
-      - working-directory: frontends/flutter
+      - name: Enable macos config
+        working-directory: frontends/flutter
         run: flutter config --enable-macos-desktop
       - name: Download Development Profile
         uses: apple-actions/download-provisioning-profiles@v1
@@ -37,8 +38,8 @@ jobs:
           issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
-      - working-directory: frontends/flutter
-        name: 🔐 Install Apple certificates
+      - name: 🔐 Install Apple certificates
+        working-directory: frontends/flutter
         env:
           P12_DISTRIBUTION_CERTIFICATE_BASE64: "${{ secrets.IOS_P12_DISTRIBUTION_CERTIFICATE_BASE64 }}"
           P12_DISTRIBUTION_CERTIFICATE_PASSWORD: "${{ secrets.IOS_P12_DISTRIBUTION_CERTIFICATE_PASSWORD }}"
@@ -60,8 +61,8 @@ jobs:
           # import certificate to keychain
           security import $CERTIFICATE_PATH -P "$P12_DISTRIBUTION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
-      - working-directory: frontends/flutter
+      - name: Build release
+        working-directory: frontends/flutter
         run: flutter build macos --release
-      - run: ls -R /Users/runner/work/jonline/jonline/frontends/flutter/build/macos
-
-  
+      - name: List files
+        run: ls -R /Users/runner/work/jonline/jonline/frontends/flutter/build/macos
